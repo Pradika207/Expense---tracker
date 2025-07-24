@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --secondary: #6b7280;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light: #f9fafb;
+            --dark: #111827;
+        }
+
+        [data-theme="dark"] {
+            --primary: #6366f1;
+            --secondary: #9ca3af;
+            --success: #34d399;
+            --danger: #f87171;
+            --warning: #fbbf24;
+            --light: #1f2937;
+            --dark: #f9fafb;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .slide-out {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-3xl font-bold">Expense Tracker</h1>
+            <button id="themeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </button>
+        </header>
+
+        <!-- Balance Summary -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 transition-all duration-300">
+            <h2 class="text-xl font-semibold mb-4">Balance Summary</h2>
+            <div class="grid grid-cols-3 gap-4 text-center">
+                <div class="bg-green-100 dark:bg-green-900 p-4 rounded-lg">
+                    <p class="text-sm text-green-800 dark:text-green-200">Income</p>
+                    <p id="income" class="text-2xl font-bold text-green-600 dark:text-green-300">$0.00</p>
+                </div>
+                <div class="bg-red-100 dark:bg-red-900 p-4 rounded-lg">
+                    <p class="text-sm text-red-800 dark:text-red-200">Expense</p>
+                    <p id="expense" class="text-2xl font-bold text-red-600 dark:text-red-300">$0.00</p>
+                </div>
+                <div class="bg-blue-100 dark:bg-blue-900 p-4 rounded-lg">
+                    <p class="text-sm text-blue-800 dark:text-blue-200">Balance</p>
+                    <p id="balance" class="text-2xl font-bold text-blue-600 dark:text-blue-300">$0.00</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction Form -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8 transition-all duration-300">
+            <h2 class="text-xl font-semibold mb-4">Add Transaction</h2>
+            <form id="transactionForm" class="space-y-4">
+                <div>
+                    <label for="transactionType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Transaction Type</label>
+                    <select id="transactionType" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="income">Income</option>
+                        <option value="expense">Expense</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="transactionName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                    <input type="text" id="transactionName" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="transactionAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount</label>
+                    <input type="number" id="transactionAmount" step="0.01" min="0.01" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="transactionDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+                    <input type="date" id="transactionDate" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="transactionCategory" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Category</label>
+                    <select id="transactionCategory" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                        <option value="food">Food</option>
+                        <option value="transportation">Transportation</option>
+                        <option value="housing">Housing</option>
+                        <option value="entertainment">Entertainment</option>
+                        <option value="shopping">Shopping</option>
+                        <option value="salary">Salary</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="transactionNotes" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                    <textarea id="transactionNotes" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">Add Transaction</button>
+            </form>
+        </div>
+
+        <!-- Transactions List -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300">
+            <h2 class="text-xl font-semibold mb-4">Recent Transactions</h2>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center pb-2 border-b border-gray-200 dark:border-gray-700">
+                    <span class="font-medium">Filter:</span>
+                    <div class="flex space-x-2">
+                        <button id="filterAll" class="px-3 py-1 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">All</button>
+                        <button id="filterIncome" class="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">Income</button>
+                        <button id="filterExpense" class="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">Expense</button>
+                    </div>
+                </div>
+                <div id="transactionsList" class="space-y-2">
+                    <!-- Transactions will be loaded here -->
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No transactions found. Add your first transaction!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Element -->
+    <div id="notification" class="notification hidden">
+        <div class="p-4 rounded-lg shadow-lg flex items-start max-w-sm">
+            <div id="notificationIcon" class="flex-shrink-0 mr-3">
+                <!-- Icon will be added here -->
+            </div>
+            <div>
+                <h3 id="notificationTitle" class="font-semibold"></h3>
+                <p id="notificationMessage" class="text-sm"></p>
+            </div>
+            <button id="notificationClose" class="ml-auto">&times;</button>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const themeToggle = document.getElementById('themeToggle');
+        const transactionForm = document.getElementById('transactionForm');
+        const transactionsList = document.getElementById('transactionsList');
+        const incomeDisplay = document.getElementById('income');
+        const expenseDisplay = document.getElementById('expense');
+        const balanceDisplay = document.getElementById('balance');
+        const filterAll = document.getElementById('filterAll');
+        const filterIncome = document.getElementById('filterIncome');
+        const filterExpense = document.getElementById('filterExpense');
+        const notification = document.getElementById('notification');
+        const notificationTitle = document.getElementById('notificationTitle');
+        const notificationMessage = document.getElementById('notificationMessage');
+        const notificationIcon = document.getElementById('notificationIcon');
+        const notificationClose = document.getElementById('notificationClose');
+
+        // State
+        let transactions = [];
+        let currentFilter = 'all';
+        let darkMode = false;
+
+        // Initialize the app
+        function init() {
+            loadTheme();
+            loadTransactions();
+            updateBalance();
+            setupEventListeners();
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            themeToggle.addEventListener('click', toggleTheme);
+            transactionForm.addEventListener('submit', handleFormSubmit);
+            filterAll.addEventListener('click', () => filterTransactions('all'));
+            filterIncome.addEventListener('click', () => filterTransactions('income'));
+            filterExpense.addEventListener('click', () => filterTransactions('expense'));
+            notificationClose.addEventListener('click', hideNotification);
+        }
+
+        // Theme functionality
+        function loadTheme() {
+            darkMode = localStorage.getItem('darkMode') === 'true';
+            applyTheme();
+        }
+
+        function toggleTheme() {
+            darkMode = !darkMode;
+            localStorage.setItem('darkMode', darkMode);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
+        }
+
+        // Transaction Form Handling
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            
+            const type = document.getElementById('transactionType').value;
+            const name = document.getElementById('transactionName').value;
+            const amount = parseFloat(document.getElementById('transactionAmount').value);
+            const date = document.getElementById('transactionDate').value;
+            const category = document.getElementById('transactionCategory').value;
+            const notes = document.getElementById('transactionNotes').value;
+
+            const transaction = {
+                id: Date.now(),
+                type,
+                name,
+                amount,
+                date,
+                category,
+                notes,
+                createdAt: new Date().toISOString()
+            };
+
+            addTransaction(transaction);
+            transactionForm.reset();
+            showNotification(type === 'income' ? 'Income added' : 'Expense added', `${name}: $${amount.toFixed(2)}`, type);
+        }
+
+        // Transaction CRUD Operations
+        function addTransaction(transaction) {
+            transactions.unshift(transaction);
+            saveTransactions();
+            renderTransactions();
+            updateBalance();
+        }
+
+        function editTransaction(id, updatedTransaction) {
+            const index = transactions.findIndex(t => t.id === id);
+            if (index !== -1) {
+                transactions[index] = { ...transactions[index], ...updatedTransaction };
+                saveTransactions();
+                renderTransactions();
+                updateBalance();
+                showNotification('Transaction updated', `${updatedTransaction.name || transactions[index].name}: $${updatedTransaction.amount || transactions[index].amount}`, transactions[index].type);
+            }
+        }
+
+        function deleteTransaction(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (transaction) {
+                transactions = transactions.filter(t => t.id !== id);
+                saveTransactions();
+                renderTransactions();
+                updateBalance();
+                showNotification('Transaction deleted', `${transaction.name}: $${transaction.amount.toFixed(2)}`, transaction.type);
+            }
+        }
+
+        // Storage Operations
+        function loadTransactions() {
+            const storedTransactions = localStorage.getItem('transactions');
+            if (storedTransactions) {
+                transactions = JSON.parse(storedTransactions);
+                renderTransactions();
+            }
+        }
+
+        function saveTransactions() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        // Rendering Functions
+        function renderTransactions() {
+            if (transactions.length === 0) {
+                transactionsList.innerHTML = `
+                    <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                        No transactions found. Add your first transaction!
+                    </div>
+                `;
+                return;
+            }
+
+            let filteredTransactions = transactions;
+            if (currentFilter === 'income') {
+                filteredTransactions = transactions.filter(t => t.type === 'income');
+            } else if (currentFilter === 'expense') {
+                filteredTransactions = transactions.filter(t => t.type === 'expense');
+            }
+
+            transactionsList.innerHTML = filteredTransactions.map(transaction => `
+                <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex justify-between items-center transition-all duration-200 slide-in">
+                    <div class="flex items-center">
+                        <div class="mr-4 p-2 rounded-full ${transaction.type === 'income' ? 'bg-green-100 dark:bg-green-900 text-green-600 dark:text-green-300' : 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-300'}">
+                            ${transaction.type === 'income' ? 
+                                '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' : 
+                                '<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h18v18H3V3z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9h6v6H9V9z" /></svg>'}
+                        </div>
+                        <div>
+                            <h3 class="font-medium">${transaction.name}</h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400">
+                                ${new Date(transaction.date).toLocaleDateString()} • ${transaction.category.charAt(0).toUpperCase() + transaction.category.slice(1)}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="${transaction.type === 'income' ? 'text-green-600 dark:text-green-300' : 'text-red-600 dark:text-red-300'} font-medium">
+                            ${transaction.type === 'income' ? '+' : '-'}$${transaction.amount.toFixed(2)}
+                        </span>
+                        <button class="edit-btn p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600" data-id="${transaction.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                        </button>
+                        <button class="delete-btn p-1 rounded-full hover:bg-gray-200 dark:hover:bg-gray-600" data-id="${transaction.id}">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.dataset.id);
+                    showEditForm(id);
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = parseInt(btn.dataset.id);
+                    if (confirm('Are you sure you want to delete this transaction?')) {
+                        deleteTransaction(id);
+                    }
+                });
+            });
+        }
+
+        function showEditForm(id) {
+            const transaction = transactions.find(t => t.id === id);
+            if (!transaction) return;
+
+            const editForm = document.createElement('div');
+            editForm.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            editForm.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 slide-in">
+                    <h2 class="text-xl font-semibold mb-4">Edit Transaction</h2>
+                    <form id="editForm" class="space-y-4">
+                        <div>
+                            <label for="editType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Transaction Type</label>
+                            <select id="editType" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                                <option value="income" ${transaction.type === 'income' ? 'selected' : ''}>Income</option>
+                                <option value="expense" ${transaction.type === 'expense' ? 'selected' : ''}>Expense</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="editName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Name</label>
+                            <input type="text" id="editName" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="${transaction.name}" required>
+                        </div>
+                        <div>
+                            <label for="editAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Amount</label>
+                            <input type="number" id="editAmount" step="0.01" min="0.01" class="mt-1 block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" value="${transaction.amount}" required>
+                        </div>
+                        <div>
+                            <label for="editDate" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+                            <input type="date" id="editDate" class="mt-1 block w-full px-3 py-2 border border
